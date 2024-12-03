@@ -12,4 +12,4 @@ pom.xml.asc
 .hgignore
 .hg/
 .idea
-.clj-kondoclojure-kafka-stream-demo.iml
+*.iml

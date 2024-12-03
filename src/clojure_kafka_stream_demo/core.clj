@@ -7,7 +7,7 @@
            (org.testcontainers.utility DockerImageName)))
 
 (def kafka-test-container
-  (-> (DockerImageName/parse "confluentinc/cp-kafka:7.5.1")
+  (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
       (KafkaContainer.)
       ;; we can easily switch from Zookeeper to Kraft
       (.withKraft)
