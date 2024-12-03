@@ -32,7 +32,7 @@
                              "group.id" (str "test-machine-" (random-uuid))}
                             topics))]
 
-      ;; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
+      ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
       (with-open [kafka-stream (core/start-kafka-stream!
                                  (partial core/build-word-count-kafka-stream-topology topics))]
         (let [write-1 (cmd/write! :input-topic {:line "a b c"}

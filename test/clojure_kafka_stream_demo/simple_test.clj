@@ -33,7 +33,7 @@
                            "group.id" "simple-kafka-stream-test-machine"}
                           topics))]
 
-    ;; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
+    ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
     (with-open [kafka-stream (core/start-kafka-stream!
                                (partial core/build-simple-kafka-stream-topology topics))]
       (let [write (cmd/write! :input-topic {:name "world"}
