@@ -1,0 +1,11 @@
+
+1. Make sure Docker Desktop is running. Code uses `org.testcontainers`
+to create/destroy Docker container for test
+        
+
+2. Run tests to send/receive messages via kafka streams:
+
+      > which lct
+      lct () {
+          evalEcho "time (lein do clean, test)"
+      }
