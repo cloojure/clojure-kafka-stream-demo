@@ -11,12 +11,10 @@
 
   :dependencies [[org.clojure/clojure "1.12.5"]
 
-                 [com.fasterxml.jackson.core/jackson-annotations "2.22"]
-
                  [fundingcircle/jackdaw "0.9.12"]
                  [org.apache.kafka/kafka-streams-test-utils "4.3.1"]
 
-                 [org.testcontainers/testcontainers "2.0.5"]
+                 [org.testcontainers/testcontainers "1.21.4"] ; *** MUST KEEP VERSIONS IN SYNC ***
                  [org.testcontainers/kafka "1.21.4"]
 
                  [org.slf4j/slf4j-api "2.0.18"]
