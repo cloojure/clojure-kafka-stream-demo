@@ -3,15 +3,28 @@
   :url "http://example.com/FIXME"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.12.0"]
+
+  :plugins [
+            [com.jakemccrary/lein-test-refresh "0.26.0"]
+            [lein-ancient "0.7.0"]
+            ]
+
+  :dependencies [[org.clojure/clojure "1.12.4"]
+
+                 [com.fasterxml.jackson.core/jackson-annotations "2.20"]
+
                  [fundingcircle/jackdaw "0.9.12"]
-                 [org.apache.kafka/kafka-streams-test-utils "3.9.0"]
+                 [org.apache.kafka/kafka-streams-test-utils "4.2.0"]
 
-                 [org.testcontainers/testcontainers "1.20.4"]
-                 [org.testcontainers/kafka "1.20.4"]
+                 [org.testcontainers/testcontainers "2.0.5"]
+                 [org.testcontainers/kafka "1.21.4"]
 
-                 [org.slf4j/slf4j-api "2.0.16"]
-                 [org.slf4j/slf4j-simple "2.0.16"]]
+                 [org.slf4j/slf4j-api "2.0.17"]
+                 [org.slf4j/slf4j-simple "2.0.17"]
+
+                 [aleph "0.9.8"]
+                 ]
+
   :main ^:skip-aot clojure-kafka-stream-demo.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

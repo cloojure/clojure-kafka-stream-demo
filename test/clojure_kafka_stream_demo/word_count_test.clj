@@ -52,21 +52,13 @@
               {:keys [results journal]} (jdt/run-test machine [write-1 write-2 watch])
               [_ _ watch-result] results]
 
-          (is (= [{:key "a"
-                   :value 1}
-                  {:key "b"
-                   :value 1}
-                  {:key "c"
-                   :value 1}
-                  {:key "x"
-                   :value 1}
-                  {:key "y"
-                   :value 1}
-                  {:key "z"
-                   :value 1}
-                  {:key "a"
-                   :value 2}
-                  {:key "b"
-                   :value 2}]
+          (is (= [{:key "a" :value 1}
+                  {:key "b" :value 1}
+                  {:key "c" :value 1}
+                  {:key "x" :value 1}
+                  {:key "y" :value 1}
+                  {:key "z" :value 1}
+                  {:key "a" :value 2}
+                  {:key "b" :value 2}]
                  (vec (map (fn [m]
                              (select-keys m [:key :value])) (get-in watch-result [:result :info]))))))))))
