@@ -28,7 +28,6 @@
     (.start c)
     (.getBootstrapServers c)))
 
-
 (defn start-kafka-stream!
   [topology-fn]
   (let [kafka-config               {"bootstrap.servers"         (kafka-bootstrap-servers)
