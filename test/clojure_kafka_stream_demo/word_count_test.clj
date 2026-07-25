@@ -37,11 +37,9 @@
               :output-topic (topic-config (str "output-topic-" (random-uuid)))}]
 
   (use-fixtures
-    :once
-    (topic-fixture
-      {"bootstrap.servers" (core/kafka-bootstrap-servers)}
-      topics))
-
+    :once (topic-fixture
+            {"bootstrap.servers" (core/kafka-bootstrap-servers)}
+            topics))
 
   (deftest word-count-kafka-stream-test
     (with-open [machine (test-machine
@@ -78,5 +76,6 @@
                   {:key "z" :value 1}
                   {:key "a" :value 2}
                   {:key "b" :value 2}]
-                 (vec (map (fn [m]
-                             (select-keys m [:key :value])) (get-in watch-result [:result :info]))))))))))
+                 (mapv (fn [m]
+                         (select-keys m [:key :value]))
+                       (get-in watch-result [:result :info])))))))))
