@@ -3,7 +3,7 @@
     [jackdaw.serdes :as js]
     [jackdaw.streams :as j])
   (:import (org.apache.kafka.streams KafkaStreams)
-           (org.testcontainers.containers KafkaContainer)
+           (org.testcontainers.kafka ConfluentKafkaContainer)
            (org.testcontainers.utility DockerImageName)))
 
 (defn topic-config
@@ -15,23 +15,20 @@
    :replication-factor 1})
 
 (def kafka-test-container
+  ; ConfluentKafkaContainer (cp-kafka images) replaces the deprecated
+  ; org.testcontainers.containers.KafkaContainer; it is KRaft-native by default.
   (delay (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
-             (KafkaContainer.)
+             (ConfluentKafkaContainer.)
 
-             ; we can easily switch from Zookeeper to Kraft
-             (.withKraft)
-
-             ; those 2 are required if you want to reuse container for tests locally (significantly faster)
-             ; required additional property to be set locally in ` ~/.testcontainers.properties`:
-             ; testcontainers.reuse.enable=true
-             (.withNetwork nil)
+             ; required to reuse the container across local test runs (significantly faster);
+             ; also set testcontainers.reuse.enable=true in ` ~/.testcontainers.properties`
              (.withReuse true))))
 
 (defn kafka-bootstrap-servers
   []
-  ; a hacky way just for demo purposes, should be a fixture in tests
-  (.start @kafka-test-container)
-  (.getBootstrapServers @kafka-test-container))
+  (let [^ConfluentKafkaContainer c @kafka-test-container]
+    (.start c)
+    (.getBootstrapServers c)))
 
 
 (defn start-kafka-stream!
