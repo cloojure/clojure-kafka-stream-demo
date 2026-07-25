@@ -14,17 +14,22 @@
    :partition-count    1
    :replication-factor 1})
 
+(def kafka-test-container
+  ; ConfluentKafkaContainer (cp-kafka images) replaces the deprecated
+  ; org.testcontainers.containers.KafkaContainer; it is KRaft-native by default.
+  ; A single shared (delayed) instance so every caller hits the SAME broker --
+  ; without this, each call would build a separate container and the fixture,
+  ; test-machine, and stream would end up on different brokers.
+  (delay (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
+             (ConfluentKafkaContainer.)
+
+             ; reuse the container across local test runs (significantly faster);
+             ; also set testcontainers.reuse.enable=true in ` ~/.testcontainers.properties`
+             (.withReuse true))))
+
 (defn kafka-bootstrap-servers
   []
-  (let [
-        ; ConfluentKafkaContainer (cp-kafka images) replaces the deprecated
-        ; org.testcontainers.containers.KafkaContainer; it is KRaft-native by default.
-        ^ConfluentKafkaContainer c  (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
-                                         (ConfluentKafkaContainer.)
-
-                                         ; required to reuse the container across local test runs (significantly faster);
-                                         ; also set testcontainers.reuse.enable=true in ` ~/.testcontainers.properties`
-                                         (.withReuse true))]
+  (let [^ConfluentKafkaContainer c @kafka-test-container]
     (.start c)
     (.getBootstrapServers c)))
 
