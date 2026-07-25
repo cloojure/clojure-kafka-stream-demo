@@ -14,7 +14,7 @@
                  [fundingcircle/jackdaw "0.9.12"]
                  [org.apache.kafka/kafka-streams-test-utils "4.3.1"]
 
-                 [org.testcontainers/testcontainers "1.21.4"] ; *** MUST KEEP VERSIONS IN SYNC ***
+                 [org.testcontainers/testcontainers "1.21.4"] ; *** MUST KEEP VERSIONS IN SYNC
                  [org.testcontainers/kafka "1.21.4"]
 
                  [org.slf4j/slf4j-api "2.0.18"]

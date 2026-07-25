@@ -1,7 +1,8 @@
 (ns clojure-kafka-stream-demo.core
   (:gen-class)
-  (:require [clojure.string :as str]
-            [jackdaw.streams :as j])
+  (:require
+    [clojure.string :as str]
+    [jackdaw.streams :as j])
   (:import (org.apache.kafka.streams KafkaStreams)
            (org.testcontainers.containers KafkaContainer)
            (org.testcontainers.utility DockerImageName)))
@@ -25,41 +26,16 @@
   (.start kafka-test-container)
   (.getBootstrapServers kafka-test-container))
 
-(defn build-simple-kafka-stream-topology
-  [topics builder]
-  (-> (j/kstream builder (:input-topic topics))
-      (j/peek println)
-      (j/map (fn [[k v]]
-               [k (str "Hello " (:name v))]))
-      (j/peek println)
-      (j/to (:output-topic topics)))
-  builder)
-
-
-(defn build-word-count-kafka-stream-topology
-  [topics builder]
-  (-> (j/kstream builder (:input-topic topics))
-      (j/peek println)
-      (j/flat-map-values
-        (fn [value]
-          (str/split (:line value) #" ")))
-      (j/group-by
-        (fn [[_ value]] value))
-      (j/count)
-      (j/to-kstream)
-      (j/peek println)
-      (j/to (:output-topic topics)))
-  builder)
 
 (defn start-kafka-stream!
   [topology-fn]
-  (let [kafka-config {"bootstrap.servers" (kafka-bootstrap-servers)
-                      "application.id" (str "clojure-kafka-stream-demo-" (random-uuid))
-                      "auto.offset.reset" "earliest"
-                      "default.key.serde" "jackdaw.serdes.EdnSerde"
-                      "default.value.serde" "jackdaw.serdes.EdnSerde"
-                      "cache.max.bytes.buffering" "0"}
-        topology (topology-fn (j/streams-builder))
+  (let [kafka-config               {"bootstrap.servers"         (kafka-bootstrap-servers)
+                                    "application.id"            (str "clojure-kafka-stream-demo-" (random-uuid))
+                                    "auto.offset.reset"         "earliest"
+                                    "default.key.serde"         "jackdaw.serdes.EdnSerde"
+                                    "default.value.serde"       "jackdaw.serdes.EdnSerde"
+                                    "cache.max.bytes.buffering" "0"}
+        topology                   (topology-fn (j/streams-builder))
         ^KafkaStreams kafka-stream (j/kafka-streams topology kafka-config)]
     (j/start kafka-stream)
     kafka-stream))

@@ -1,21 +1,39 @@
 (ns clojure-kafka-stream-demo.word-count-test
-  (:require [jackdaw.test :as jdt]
-            [clojure.test :refer :all]
-            [clojure-kafka-stream-demo.core :as core]
-            [jackdaw.test.commands :as cmd]
-            [jackdaw.serdes :as js]
-            [jackdaw.test :refer [test-machine]]
-            [jackdaw.test.fixtures :refer [topic-fixture]]))
+  (:require
+    [clojure-kafka-stream-demo.core :as core]
+    [clojure.string :as str]
+    [clojure.test :refer :all]
+    [jackdaw.serdes :as js]
+    [jackdaw.streams :as j]
+    [jackdaw.test :as jdt]
+    [jackdaw.test :refer [test-machine]]
+    [jackdaw.test.commands :as cmd]
+    [jackdaw.test.fixtures :refer [topic-fixture]]))
 
 (defn topic-config
   [topic-name]
-  {:topic-name topic-name
-   :key-serde (js/edn-serde)
-   :value-serde (js/edn-serde)
-   :partition-count 1
+  {:topic-name         topic-name
+   :key-serde          (js/edn-serde)
+   :value-serde        (js/edn-serde)
+   :partition-count    1
    :replication-factor 1})
 
-(let [topics {:input-topic (topic-config (str "input-topic-" (random-uuid)))
+(defn build-word-count-kafka-stream-topology
+  [topics builder]
+  (-> (j/kstream builder (:input-topic topics))
+      (j/peek println)
+      (j/flat-map-values
+        (fn [value]
+          (str/split (:line value) #" ")))
+      (j/group-by
+        (fn [[_ value]] value))
+      (j/count)
+      (j/to-kstream)
+      (j/peek println)
+      (j/to (:output-topic topics)))
+  builder)
+
+(let [topics {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
               :output-topic (topic-config (str "output-topic-" (random-uuid)))}]
 
   (use-fixtures
@@ -29,26 +47,26 @@
     (with-open [machine (test-machine
                           (jdt/kafka-transport
                             {"bootstrap.servers" (core/kafka-bootstrap-servers)
-                             "group.id" (str "test-machine-" (random-uuid))}
+                             "group.id"          (str "test-machine-" (random-uuid))}
                             topics))]
 
       ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
       (with-open [kafka-stream (core/start-kafka-stream!
-                                 (partial core/build-word-count-kafka-stream-topology topics))]
+                                 (partial build-word-count-kafka-stream-topology topics))]
         (let [write-1 (cmd/write! :input-topic {:line "a b c"}
-                                  {:key (random-uuid)
+                                  {:key       (random-uuid)
                                    :partition 0})
               write-2 (cmd/write! :input-topic {:line "x y z a b"}
-                                  {:key (random-uuid)
+                                  {:key       (random-uuid)
                                    :partition 0})
-              watch (cmd/watch (fn [journal]
-                                 (let [output (->> (get-in journal [:topics :output-topic])
-                                                   (remove nil?))]
-                                   (when (= 8 (count output))
-                                     output))
+              watch   (cmd/watch (fn [journal]
+                                   (let [output (->> (get-in journal [:topics :output-topic])
+                                                  (remove nil?))]
+                                     (when (= 8 (count output))
+                                       output))
 
-                                 )
-                      {:timeout 10000})
+                                   )
+                                 {:timeout 10000})
               {:keys [results journal]} (jdt/run-test machine [write-1 write-2 watch])
               [_ _ watch-result] results]
 
