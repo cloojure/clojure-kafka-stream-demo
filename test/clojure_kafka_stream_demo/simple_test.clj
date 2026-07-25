@@ -17,7 +17,7 @@
           topics))
 
 (defn build-simple-kafka-stream-topology
-  [topics builder]
+  [builder]
   (-> (j/kstream builder (:input-topic topics))
       (j/peek println)
       (j/map (fn [[k v]]
@@ -35,8 +35,7 @@
                           topics))]
 
     ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
-    (with-open [kafka-stream (start-kafka-stream!
-                               (partial build-simple-kafka-stream-topology topics))]
+    (with-open [kafka-stream (start-kafka-stream! build-simple-kafka-stream-topology)]
       (let [write (cmd/write! :input-topic {:name "world"}
                               {:partition 0})
             watch (cmd/watch

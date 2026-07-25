@@ -8,11 +8,11 @@
     [jackdaw.test.commands :as cmd]
     [jackdaw.test.fixtures :refer [topic-fixture]]))
 
-(def topics {:input-topic (topic-config (str "input-topic-" (random-uuid)))
-              :output-topic  (topic-config (str "output-topic-" (random-uuid)))})
+(def topics {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
+             :output-topic (topic-config (str "output-topic-" (random-uuid)))})
 
 (defn build-word-count-kafka-stream-topology
-  [topics builder]
+  [builder]
   (-> (j/kstream builder (:input-topic topics))
       (j/peek println)
       (j/flat-map-values
@@ -40,8 +40,7 @@
                           topics))]
 
     ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
-    (with-open [kafka-stream (start-kafka-stream!
-                               (partial build-word-count-kafka-stream-topology topics))]
+    (with-open [kafka-stream (start-kafka-stream! build-word-count-kafka-stream-topology)]
       (let [write-1 (cmd/write! :input-topic {:line "a b c"}
                                 {:key       (random-uuid)
                                  :partition 0})
