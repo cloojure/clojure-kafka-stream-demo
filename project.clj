@@ -23,7 +23,6 @@
                  [aleph "0.9.10"]
                  ]
 
-  :main ^:skip-aot clojure-kafka-stream-demo.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
