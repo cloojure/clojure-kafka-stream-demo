@@ -12,7 +12,10 @@
   :dependencies [[org.clojure/clojure "1.12.5"]
 
                  [fundingcircle/jackdaw "0.9.12"]
-                 [org.apache.kafka/kafka-streams-test-utils "4.3.1"]
+
+                 ; jackdaw.data.producer needs org.apache.kafka.streams.test.TestRecord
+                 ; from this jar; pin to jackdaw's Kafka (3.3.2) to avoid a 3.x/4.x skew.
+                 [org.apache.kafka/kafka-streams-test-utils "3.3.2"]
 
                  [org.testcontainers/testcontainers "1.21.4"] ; *** MUST KEEP VERSIONS IN SYNC
                  [org.testcontainers/kafka "1.21.4"]

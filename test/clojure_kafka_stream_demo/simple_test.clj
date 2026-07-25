@@ -1,32 +1,17 @@
 (ns clojure-kafka-stream-demo.simple-test
+  (:use clojure-kafka-stream-demo.core)
   (:require
-    [clojure-kafka-stream-demo.core :as core]
-    [clojure.string :as str]
     [clojure.test :refer :all]
-    [jackdaw.serdes :as js]
     [jackdaw.streams :as j]
-    [jackdaw.test :as jdt]
-    [jackdaw.test :refer [test-machine]]
+    [jackdaw.test :as jdt :refer [test-machine]]
     [jackdaw.test.commands :as cmd]
     [jackdaw.test.fixtures :refer [topic-fixture]]
     ))
 
-(defn topic-config
-  [topic-name]
-  {:topic-name         topic-name
-   :key-serde          (js/edn-serde)
-   :value-serde        (js/edn-serde)
-   :partition-count    1
-   :replication-factor 1})
-
-(def topics
-  {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
-   :output-topic (topic-config (str "output-topic-" (random-uuid)))})
-
 (use-fixtures
   :once
   (topic-fixture
-    {"bootstrap.servers" (core/kafka-bootstrap-servers)}
+    {"bootstrap.servers" (kafka-bootstrap-servers)}
     topics))
 
 (defn build-simple-kafka-stream-topology
@@ -40,31 +25,33 @@
   builder)
 
 (deftest simple-kafka-stream-test
-  (with-open [machine (test-machine
-                        (jdt/kafka-transport
-                          {"bootstrap.servers" (core/kafka-bootstrap-servers)
-                           "group.id"          "simple-kafka-stream-test-machine"}
-                          topics))]
+  (let [topics {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
+                :output-topic (topic-config (str "output-topic-" (random-uuid)))}]
+    (with-open [machine (test-machine
+                          (jdt/kafka-transport
+                            {"bootstrap.servers" (kafka-bootstrap-servers)
+                             "group.id"          "simple-kafka-stream-test-machine"}
+                            topics))]
 
-    ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
-    (with-open [kafka-stream (core/start-kafka-stream!
-                               (partial build-simple-kafka-stream-topology topics))]
-      (let [write (cmd/write! :input-topic {:name "world"}
-                              {:partition 0})
-            watch (cmd/watch
-                    (fn [journal]
-                      (->> (get-in journal [:topics :output-topic])
-                        (first)))
-                    {:timeout 5000})
-            {:keys [results]} (jdt/run-test machine [write watch])
-            [_ watch-result] results]
+      ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
+      (with-open [kafka-stream (start-kafka-stream!
+                                 (partial build-simple-kafka-stream-topology topics))]
+        (let [write (cmd/write! :input-topic {:name "world"}
+                                {:partition 0})
+              watch (cmd/watch
+                      (fn [journal]
+                        (->> (get-in journal [:topics :output-topic])
+                          (first)))
+                      {:timeout 5000})
+              {:keys [results]} (jdt/run-test machine [write watch])
+              [_ watch-result] results]
 
-        (is (= {:headers   {}
-                :key       nil
-                :offset    0
-                :partition 0
-                :topic     :output-topic
-                :value     "Hello world"}
+          (is (= {:headers   {}
+                  :key       nil
+                  :offset    0
+                  :partition 0
+                  :topic     :output-topic
+                  :value     "Hello world"}
 
-               (get-in watch-result [:result :info])))))))
+                 (get-in watch-result [:result :info]))))))))
 

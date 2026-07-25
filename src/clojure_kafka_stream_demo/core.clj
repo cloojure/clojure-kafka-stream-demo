@@ -1,10 +1,18 @@
 (ns clojure-kafka-stream-demo.core
   (:require
-    [clojure.string :as str]
+    [jackdaw.serdes :as js]
     [jackdaw.streams :as j])
   (:import (org.apache.kafka.streams KafkaStreams)
            (org.testcontainers.containers KafkaContainer)
            (org.testcontainers.utility DockerImageName)))
+
+(defn topic-config
+  [topic-name]
+  {:topic-name         topic-name
+   :key-serde          (js/edn-serde)
+   :value-serde        (js/edn-serde)
+   :partition-count    1
+   :replication-factor 1})
 
 (def kafka-test-container
   (delay (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
