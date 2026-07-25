@@ -2,9 +2,7 @@
   (:require
     [jackdaw.serdes :as js]
     [jackdaw.streams :as j])
-  (:import (org.apache.kafka.streams KafkaStreams)
-           (org.testcontainers.kafka ConfluentKafkaContainer)
-           (org.testcontainers.utility DockerImageName)))
+  (:import (org.apache.kafka.streams KafkaStreams)))
 
 (defn topic-config
   [topic-name]
@@ -14,33 +12,17 @@
    :partition-count    1
    :replication-factor 1})
 
-(def kafka-test-container
-  ; ConfluentKafkaContainer (cp-kafka images) replaces the deprecated
-  ; org.testcontainers.containers.KafkaContainer; it is KRaft-native by default.
-  ; A single shared (delayed) instance so every caller hits the SAME broker --
-  ; without this, each call would build a separate container and the fixture,
-  ; test-machine, and stream would end up on different brokers.
-  (delay (-> (DockerImageName/parse "confluentinc/cp-kafka:7.8.0")
-             (ConfluentKafkaContainer.)
-
-             ; reuse the container across local test runs (significantly faster);
-             ; also set testcontainers.reuse.enable=true in ` ~/.testcontainers.properties`
-             (.withReuse true))))
-
-(defn kafka-bootstrap-servers
-  []
-  (let [^ConfluentKafkaContainer c @kafka-test-container]
-    (.start c)
-    (.getBootstrapServers c)))
-
 (defn start-kafka-stream!
-  [topology-fn]
-  (let [kafka-config               {"bootstrap.servers"         (kafka-bootstrap-servers)
-                                    "application.id"            (str "clojure-kafka-stream-demo-" (random-uuid))
-                                    "auto.offset.reset"         "earliest"
-                                    "default.key.serde"         "jackdaw.serdes.EdnSerde"
-                                    "default.value.serde"       "jackdaw.serdes.EdnSerde"
-                                    "cache.max.bytes.buffering" "0"}
+  "Build and start a Kafka Streams app. `broker-config` supplies the connection
+   config (e.g. {\"bootstrap.servers\" ...}); the caller decides where the broker
+   comes from, keeping this namespace free of any test/container dependencies."
+  [broker-config topology-fn]
+  (let [kafka-config               (merge broker-config
+                                          {"application.id"            (str "clojure-kafka-stream-demo-" (random-uuid))
+                                           "auto.offset.reset"         "earliest"
+                                           "default.key.serde"         "jackdaw.serdes.EdnSerde"
+                                           "default.value.serde"       "jackdaw.serdes.EdnSerde"
+                                           "cache.max.bytes.buffering" "0"})
         topology                   (topology-fn (j/streams-builder))
         ^KafkaStreams kafka-stream (j/kafka-streams topology kafka-config)]
     (j/start kafka-stream)

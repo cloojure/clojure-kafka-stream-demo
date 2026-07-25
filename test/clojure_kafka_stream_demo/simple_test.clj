@@ -1,20 +1,16 @@
 (ns clojure-kafka-stream-demo.simple-test
   (:use clojure-kafka-stream-demo.core)
   (:require
+    [clojure-kafka-stream-demo.test-support :as ts]
     [clojure.test :refer :all]
     [jackdaw.streams :as j]
     [jackdaw.test :as jdt :refer [test-machine]]
-    [jackdaw.test.commands :as cmd]
-    [jackdaw.test.fixtures :refer [topic-fixture]]
-    ))
+    [jackdaw.test.commands :as cmd]))
 
 (def topics {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
              :output-topic (topic-config (str "output-topic-" (random-uuid)))})
 
-(use-fixtures
-  :once (topic-fixture
-          {"bootstrap.servers" (kafka-bootstrap-servers)}
-          topics))
+(use-fixtures :once (ts/kafka-topic-fixture topics))
 
 (defn build-simple-kafka-stream-topology
   [builder]
@@ -29,13 +25,10 @@
 (deftest simple-kafka-stream-test
 
   (with-open [machine (test-machine
-                        (jdt/kafka-transport
-                          {"bootstrap.servers" (kafka-bootstrap-servers)
-                           "group.id"          "simple-kafka-stream-test-machine"}
-                          topics))]
+                        (ts/kafka-test-transport topics "simple-kafka-stream-test-machine"))]
 
     ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
-    (with-open [kafka-stream (start-kafka-stream! build-simple-kafka-stream-topology)]
+    (with-open [kafka-stream (start-kafka-stream! (ts/broker-config) build-simple-kafka-stream-topology)]
       (let [write (cmd/write! :input-topic {:name "world"}
                               {:partition 0})
             watch (cmd/watch

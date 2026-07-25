@@ -1,12 +1,12 @@
 (ns clojure-kafka-stream-demo.word-count-test
   (:use clojure-kafka-stream-demo.core)
   (:require
+    [clojure-kafka-stream-demo.test-support :as ts]
     [clojure.string :as str]
     [clojure.test :refer :all]
     [jackdaw.streams :as j]
     [jackdaw.test :as jdt :refer [test-machine]]
-    [jackdaw.test.commands :as cmd]
-    [jackdaw.test.fixtures :refer [topic-fixture]]))
+    [jackdaw.test.commands :as cmd]))
 
 (def topics {:input-topic  (topic-config (str "input-topic-" (random-uuid)))
              :output-topic (topic-config (str "output-topic-" (random-uuid)))})
@@ -26,21 +26,14 @@
       (j/to (:output-topic topics)))
   builder)
 
-(use-fixtures
-  :once
-  (topic-fixture
-    {"bootstrap.servers" (kafka-bootstrap-servers)}
-    topics))
+(use-fixtures :once (ts/kafka-topic-fixture topics))
 
 (deftest word-count-kafka-stream-test
   (with-open [machine (test-machine
-                        (jdt/kafka-transport
-                          {"bootstrap.servers" (kafka-bootstrap-servers)
-                           "group.id"          (str "test-machine-" (random-uuid))}
-                          topics))]
+                        (ts/kafka-test-transport topics (str "test-machine-" (random-uuid))))]
 
     ; just a simplification for the demo, usually it will be started as part of the test system, via component or integrant
-    (with-open [kafka-stream (start-kafka-stream! build-word-count-kafka-stream-topology)]
+    (with-open [kafka-stream (start-kafka-stream! (ts/broker-config) build-word-count-kafka-stream-topology)]
       (let [write-1 (cmd/write! :input-topic {:line "a b c"}
                                 {:key       (random-uuid)
                                  :partition 0})
